@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="EcoTrack"/>
+<meta name="theme-color" content="#6366F1"/>
+<title>EcoTrack – Suivi de Budget</title>
+<link rel="manifest" href="/manifest.json"/>
+<link rel="apple-touch-icon" href="icon-192.svg"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --primary:#6366F1;--primary-dark:#4F46E5;--primary-light:#818CF8;
+  --income:#22C55E;--income-bg:#DCFCE7;--income-text:#15803D;
+  --expense:#F43F5E;--expense-bg:#FFF1F2;--expense-text:#BE123C;
+  --bg:#F8FAFC;--surface:#FFFFFF;--border:#E2E8F0;
+  --text:#1E293B;--text-muted:#64748B;--text-hint:#94A3B8;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden;max-width:480px;margin:0 auto}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+
+/* HEADER */
+#header{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:calc(12px + var(--safe-top)) 16px 12px;position:sticky;top:0;z-index:100
+}
+.header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.logo{font-size:20px;font-weight:800;color:var(--primary)}
+.logo span{font-size:11px;font-weight:500;color:var(--text-muted);display:block;margin-top:-2px}
+.today-badge{font-size:11px;font-weight:700;color:var(--text);background:#F1F5F9;padding:5px 10px;border-radius:10px}
+
+/* TABS */
+.tabs{display:flex;background:#F1F5F9;border-radius:12px;padding:3px;margin-bottom:12px}
+.tab{flex:1;text-align:center;padding:8px 0;font-size:12px;font-weight:700;color:var(--text-muted);border-radius:9px;transition:.15s;cursor:pointer}
+.tab.active{background:var(--surface);color:var(--primary);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+
+/* DATE NAV */
+.date-nav{display:flex;align-items:center;background:#F9FAFB;border:1px solid var(--border);border-radius:12px;padding:2px 4px}
+.date-nav button{width:36px;height:36px;font-size:18px;color:#4B5563;display:flex;align-items:center;justify-content:center;border-radius:8px}
+.date-nav button:active{background:#E5E7EB}
+.date-label{flex:1;text-align:center;font-size:14px;font-weight:700;color:#1F2937}
+
+/* MAIN CONTENT */
+#main{padding:16px;padding-bottom:calc(90px + var(--safe-bottom))}
+
+/* BALANCE CARD */
+.balance-card{background:var(--surface);border:1px solid var(--border);border-radius:22px;overflow:hidden;margin-bottom:14px}
+.balance-accent{height:7px}
+.balance-body{padding:18px 20px}
+.balance-label{font-size:12px;font-weight:700;color:var(--text-muted);text-align:center;margin-bottom:4px}
+.balance-amount{font-size:32px;font-weight:800;text-align:center;margin-bottom:14px}
+.balance-divider{height:1px;background:#F1F5F9;margin-bottom:14px}
+.balance-row{display:flex;align-items:center}
+.balance-col{flex:1;text-align:center}
+.balance-col-label{display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:3px}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.balance-col-amount{font-size:16px;font-weight:800}
+.balance-sep{width:1px;height:35px;background:var(--border)}
+
+/* CATEGORY CHART */
+.section-card{background:var(--surface);border:1px solid var(--border);border-radius:22px;overflow:hidden;margin-bottom:14px}
+.section-accent{height:7px}
+.section-body{padding:18px 20px}
+.section-title{font-size:14px;font-weight:800;color:#1E293B;margin-bottom:12px}
+.segment-bar{height:10px;border-radius:6px;display:flex;overflow:hidden;background:var(--border);margin-bottom:12px}
+.segment{height:100%}
+.cat-list{display:flex;flex-direction:column;gap:8px}
+.cat-row{display:flex;justify-content:space-between;align-items:center}
+.cat-name{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:#374151}
+.cat-amount{font-size:13px;font-weight:700;color:#1F2937}
+
+/* ANNUAL CHART */
+.chart-scroll{overflow-x:auto;padding-bottom:4px}
+.bars-row{display:flex;gap:14px;align-items:flex-end;padding:4px 2px;min-width:max-content}
+.month-col{display:flex;flex-direction:column;align-items:center;width:32px}
+.bars{display:flex;gap:3px;align-items:flex-end;height:80px}
+.bar{width:10px;border-radius:4px 4px 0 0;min-height:4px;transition:.3s}
+.month-label{font-size:10px;font-weight:700;margin-top:5px;color:var(--text-muted)}
+.month-label.current{color:var(--primary)}
+.legend{display:flex;gap:14px;margin-top:12px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#475569}
+
+/* FEEDBACK */
+.feedback-card{border-radius:18px;border:1px solid;padding:14px 16px;margin-bottom:18px}
+.feedback-text{font-size:12px;font-weight:700;line-height:1.5}
+
+/* TRANSACTIONS */
+.tx-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.tx-title{font-size:15px;font-weight:700;color:#1F2937}
+.tx-count{font-size:12px;color:var(--text-muted)}
+.search-wrap{position:relative;margin-bottom:12px}
+.search-wrap input{width:100%;padding:10px 12px 10px 38px;border:1px solid var(--border);border-radius:12px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);outline:none}
+.search-wrap input:focus{border-color:var(--primary)}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text-hint)}
+.search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--text-hint);background:none;border:none;cursor:pointer;padding:2px}
+.empty{text-align:center;padding:32px 24px}
+.empty-icon{font-size:44px;margin-bottom:8px}
+.empty-title{font-size:14px;font-weight:700;color:#4B5563;margin-bottom:4px}
+.empty-sub{font-size:12px;color:var(--text-hint);line-height:1.5}
+.tx-list{display:flex;flex-direction:column;gap:10px}
+.tx-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:13px 14px;display:flex;align-items:center;gap:12px}
+.tx-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.tx-info{flex:1;min-width:0}
+.tx-name{font-size:13px;font-weight:700;color:#1E293B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-meta{font-size:11px;color:var(--text-hint);margin-top:1px}
+.tx-cat{font-weight:700}
+.tx-right{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.tx-amount{font-size:14px;font-weight:800}
+.tx-del{width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:var(--text-hint);font-size:16px;border-radius:8px}
+.tx-del:active{background:#FEE2E2;color:#EF4444}
+
+/* FAB */
+#fab{
+  position:fixed;bottom:calc(20px + var(--safe-bottom));right:calc(50% - 220px);
+  width:58px;height:58px;border-radius:50%;background:var(--primary);color:#fff;
+  font-size:28px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 20px rgba(99,102,241,.45);z-index:200;transition:.15s;border:none;cursor:pointer
+}
+#fab:active{transform:scale(.94)}
+@media(max-width:480px){#fab{right:20px}}
+
+/* MODAL OVERLAY */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:300;
+  display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:.2s
+}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{
+  background:var(--surface);border-radius:24px 24px 0 0;
+  width:100%;max-width:480px;max-height:90dvh;
+  overflow-y:auto;padding:20px 20px calc(20px + var(--safe-bottom));
+  transform:translateY(100%);transition:.25s cubic-bezier(.32,0,.67,0)
+}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-title{font-size:17px;font-weight:700;color:#1E293B;text-align:center;margin-bottom:16px}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
+
+/* TYPE TOGGLE */
+.type-toggle{display:flex;background:#F1F5F9;border-radius:12px;padding:3px;margin-bottom:16px}
+.type-btn{flex:1;text-align:center;padding:10px 4px;font-size:12px;font-weight:700;border-radius:9px;transition:.15s;cursor:pointer}
+
+/* FORM */
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;font-weight:700;color:#475569;margin-bottom:5px}
+.field input{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;font-family:inherit;color:var(--text);background:var(--surface);outline:none;transition:.15s}
+.field input:focus{border-color:var(--primary)}
+.field-label{font-size:13px;font-weight:700;color:#475569;margin-bottom:8px}
+.cat-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.cat-chip{padding:7px 11px;border-radius:10px;font-size:12px;font-weight:700;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;transition:.15s;color:#475569}
+.cat-chip.selected{border-width:2px}
+.date-btns{display:flex;gap:7px;margin-bottom:18px}
+.date-btn{flex:1;padding:9px 2px;border-radius:10px;font-size:11px;font-weight:700;background:#F1F5F9;color:#475569;text-align:center;cursor:pointer;border:none;transition:.15s}
+.date-btn.active{color:#fff}
+.modal-actions{display:flex;gap:10px}
+.btn-cancel{flex:1;padding:13px;border-radius:13px;font-size:14px;font-weight:700;border:1.5px solid var(--border);background:var(--surface);color:#64748B;cursor:pointer}
+.btn-save{flex:1.5;padding:13px;border-radius:13px;font-size:14px;font-weight:700;border:none;color:#fff;cursor:pointer;transition:.15s}
+.btn-save:disabled{background:#E2E8F0;color:#94A3B8;cursor:default}
+
+/* INSTALL BANNER */
+#install-banner{
+  display:none;position:fixed;top:0;left:0;right:0;max-width:480px;margin:0 auto;
+  background:var(--primary);color:#fff;padding:calc(12px + var(--safe-top)) 16px 12px;
+  z-index:400;flex-direction:column;gap:8px
+}
+#install-banner.show{display:flex}
+.install-row{display:flex;align-items:center;justify-content:space-between}
+.install-text{font-size:13px;font-weight:700}
+.install-sub{font-size:11px;opacity:.85}
+.install-btns{display:flex;gap:8px}
+.btn-install{background:#fff;color:var(--primary);font-weight:700;font-size:12px;padding:6px 14px;border-radius:8px;cursor:pointer}
+.btn-dismiss{background:rgba(255,255,255,.2);color:#fff;font-size:12px;padding:6px 12px;border-radius:8px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<!-- INSTALL BANNER -->
+<div id="install-banner">
+  <div class="install-row">
+    <div>
+      <div class="install-text">💰 Installer EcoTrack</div>
+      <div class="install-sub">Ajouter à l'écran d'accueil comme une vraie app</div>
+    </div>
+    <div class="install-btns">
+      <button class="btn-install" id="btn-install-ok">Installer</button>
+      <button class="btn-dismiss" id="btn-install-no">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div id="header">
+  <div class="header-top">
+    <div class="logo">💰 EcoTrack <span>Gérer vos finances intelligemment</span></div>
+    <div class="today-badge" id="today-badge"></div>
+  </div>
+  <div class="tabs">
+    <div class="tab" data-tab="0">JOUR</div>
+    <div class="tab active" data-tab="1">MOIS</div>
+    <div class="tab" data-tab="2">ANNÉE</div>
+  </div>
+  <div class="date-nav">
+    <button id="prev-btn" aria-label="Période précédente">&#8249;</button>
+    <div class="date-label" id="period-label"></div>
+    <button id="next-btn" aria-label="Période suivante">&#8250;</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <!-- Balance Card -->
+  <div class="balance-card">
+    <div class="balance-accent" id="balance-accent"></div>
+    <div class="balance-body">
+      <div class="balance-label">Solde Net</div>
+      <div class="balance-amount" id="balance-amount">0,00 €</div>
+      <div class="balance-divider"></div>
+      <div class="balance-row">
+        <div class="balance-col">
+          <div class="balance-col-label"><span class="dot" style="background:var(--income)"></span>Revenus</div>
+          <div class="balance-col-amount" style="color:var(--income)" id="total-income">+0,00 €</div>
+        </div>
+        <div class="balance-sep"></div>
+        <div class="balance-col">
+          <div class="balance-col-label"><span class="dot" style="background:var(--expense)"></span>Dépenses</div>
+          <div class="balance-col-amount" style="color:var(--expense)" id="total-expense">-0,00 €</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Chart -->
+  <div class="section-card" id="cat-card" style="display:none">
+    <div class="section-accent" style="background:var(--expense)"></div>
+    <div class="section-body">
+      <div class="section-title">Répartition des Dépenses</div>
+      <div class="segment-bar" id="segment-bar"></div>
+      <div class="cat-list" id="cat-list"></div>
+    </div>
+  </div>
+
+  <!-- Annual Chart -->
+  <div class="section-card">
+    <div class="section-accent" style="background:var(--primary)"></div>
+    <div class="section-body">
+      <div class="section-title" id="annual-title">Aperçu Annuel</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Évolution mensuelle des revenus et dépenses</div>
+      <div class="chart-scroll">
+        <div class="bars-row" id="bars-row"></div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><span class="dot" style="background:var(--income)"></span>Revenu (€)</div>
+        <div class="legend-item"><span class="dot" style="background:var(--expense)"></span>Dépense (€)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feedback -->
+  <div class="feedback-card" id="feedback-card">
+    <div class="feedback-text" id="feedback-text"></div>
+  </div>
+
+  <!-- Transactions -->
+  <div class="tx-header">
+    <div class="tx-title">Opérations de la période</div>
+    <div class="tx-count" id="tx-count">0 élément(s)</div>
+  </div>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input id="search" type="search" placeholder="Rechercher par libellé ou catégorie…"/>
+    <button class="search-clear" id="search-clear" style="display:none">✕</button>
+  </div>
+  <div id="tx-container"></div>
+</div>
+
+<!-- FAB -->
+<button id="fab" aria-label="Ajouter une transaction">+</button>
+
+<!-- ADD MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Nouvelle Opération</div>
+
+    <div class="type-toggle" id="type-toggle">
+      <div class="type-btn" data-type="expense" id="btn-expense">📉 Dépense</div>
+      <div class="type-btn" data-type="income" id="btn-income">📈 Revenu</div>
+    </div>
+
+    <div class="field">
+      <label>Montant (€)</label>
+      <input id="inp-amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00"/>
+    </div>
+    <div class="field">
+      <label>Libellé / Titre</label>
+      <input id="inp-title" type="text" placeholder="Ex: Courses Monoprix, Salaire…"/>
+    </div>
+
+    <div class="field-label">Choisir une Catégorie</div>
+    <div class="cat-grid" id="cat-grid"></div>
+
+    <div class="field-label">Date de l'opération</div>
+    <div class="date-btns">
+      <button class="date-btn active" data-date="today">Aujourd'hui</button>
+      <button class="date-btn" data-date="yesterday">Hier</button>
+      <button class="date-btn" data-date="active">Date active</button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" id="btn-cancel">Annuler</button>
+      <button class="btn-save" id="btn-save" disabled>Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────
+const EXPENSE_CATS = [
+  {name:'Alimentaire',emoji:'🛒',color:'#F43F5E'},
+  {name:'Logement',emoji:'🏠',color:'#8B5CF6'},
+  {name:'Transport',emoji:'🚗',color:'#3B82F6'},
+  {name:'Loisirs',emoji:'🍿',color:'#EC4899'},
+  {name:'Santé',emoji:'🏥',color:'#EF4444'},
+  {name:'Shopping',emoji:'🛍️',color:'#F59E0B'},
+  {name:'Autre',emoji:'🪙',color:'#64748B'}
+];
+const INCOME_CATS = [
+  {name:'Salaire',emoji:'💰',color:'#10B981'},
+  {name:'Freelance',emoji:'🚀',color:'#6366F1'},
+  {name:'Investissements',emoji:'📈',color:'#06B6D4'},
+  {name:'Vente / Autre',emoji:'🎁',color:'#F97316'}
+];
+
+function getCat(name, isIncome) {
+  const list = isIncome ? INCOME_CATS : EXPENSE_CATS;
+  return list.find(c => c.name === name) || {name, emoji:'🪙', color:'#64748B'};
+}
+
+function uuid() {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+function sampleEntries() {
+  const now = Date.now(), d = 86400000;
+  return [
+    {id:'1', title:'Salaire mensuel',    amount:2500,  isIncome:true,  category:'Salaire',       dateMillis: now - 5*d},
+    {id:'2', title:'Courses hebdomadaires', amount:84.60,isIncome:false, category:'Alimentaire',  dateMillis: now - 3*d},
+    {id:'3', title:'Abonnement Streaming',  amount:15.99,isIncome:false, category:'Loisirs',      dateMillis: now - 2*d},
+    {id:'4', title:'Vente vélo occasion',   amount:120,  isIncome:true,  category:'Vente / Autre',dateMillis: now - d},
+    {id:'5', title:"Plein d'essence",       amount:75,   isIncome:false, category:'Transport',    dateMillis: now},
+    {id:'6', title:'Déjeuner Restaurant',   amount:24.50,isIncome:false, category:'Alimentaire',  dateMillis: now},
+    {id:'7', title:'Loyer Appartement',     amount:650,  isIncome:false, category:'Logement',     dateMillis: now - 15*d},
+  ];
+}
+
+// ─── STATE ──────────────────────────────────────────────────────────
+let entries = [];
+let selectedDate = Date.now();
+let selectedTab = 1; // 0=jour 1=mois 2=année
+let searchQuery = '';
+let isIncome = false;
+let selCat = '';
+let selDateType = 'today';
+
+function loadEntries() {
+  try {
+    const raw = localStorage.getItem('ecotrack_entries');
+    if (!raw) { entries = sampleEntries(); saveEntries(); return; }
+    entries = JSON.parse(raw);
+  } catch(e) { entries = sampleEntries(); saveEntries(); }
+}
+function saveEntries() {
+  localStorage.setItem('ecotrack_entries', JSON.stringify(entries));
+}
+
+// ─── DATE HELPERS ────────────────────────────────────────────────────
+function sameDay(a, b) {
+  const ca = new Date(a), cb = new Date(b);
+  return ca.getFullYear()===cb.getFullYear() && ca.getMonth()===cb.getMonth() && ca.getDate()===cb.getDate();
+}
+function sameMonth(a, b) {
+  const ca = new Date(a), cb = new Date(b);
+  return ca.getFullYear()===cb.getFullYear() && ca.getMonth()===cb.getMonth();
+}
+function sameYear(a, b) {
+  return new Date(a).getFullYear() === new Date(b).getFullYear();
+}
+function matchesPeriod(entry) {
+  if (selectedTab===0) return sameDay(entry.dateMillis, selectedDate);
+  if (selectedTab===1) return sameMonth(entry.dateMillis, selectedDate);
+  return sameYear(entry.dateMillis, selectedDate);
+}
+function adjustPeriod(dir) {
+  const d = new Date(selectedDate);
+  if (selectedTab===0) d.setDate(d.getDate()+dir);
+  else if (selectedTab===1) d.setMonth(d.getMonth()+dir);
+  else d.setFullYear(d.getFullYear()+dir);
+  selectedDate = d.getTime();
+}
+function periodLabel() {
+  const d = new Date(selectedDate);
+  if (selectedTab===0) return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).replace(/^\w/,c=>c.toUpperCase());
+  if (selectedTab===1) return d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}).replace(/^\w/,c=>c.toUpperCase());
+  return 'Année '+d.getFullYear();
+}
+function fmtShort(ts) {
+  return new Date(ts).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});
+}
+function fmtEur(n) {
+  return n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+}
+
+// ─── RENDER ─────────────────────────────────────────────────────────
+function render() {
+  // today badge
+  document.getElementById('today-badge').textContent = "Auj. " + new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+
+  // tabs
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', +t.dataset.tab===selectedTab));
+
+  // period label
+  document.getElementById('period-label').textContent = periodLabel();
+
+  // filtered entries
+  const byTime = entries.filter(matchesPeriod);
+  const displayed = searchQuery ? byTime.filter(e =>
+    e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    e.category.toLowerCase().includes(searchQuery.toLowerCase())
+  ) : byTime;
+
+  // kpi
+  const totalInc = byTime.filter(e=>e.isIncome).reduce((s,e)=>s+e.amount,0);
+  const totalExp = byTime.filter(e=>!e.isIncome).reduce((s,e)=>s+e.amount,0);
+  const net = totalInc - totalExp;
+
+  const accent = net >= 0 ? 'var(--income)' : 'var(--expense)';
+  document.getElementById('balance-accent').style.background = accent;
+  document.getElementById('balance-amount').style.color = accent;
+  document.getElementById('balance-amount').textContent = (net>=0?'+':'')+fmtEur(net);
+  document.getElementById('total-income').textContent = '+'+fmtEur(totalInc);
+  document.getElementById('total-expense').textContent = '-'+fmtEur(totalExp);
+
+  // category chart
+  const expOnly = byTime.filter(e=>!e.isIncome);
+  const expTotal = expOnly.reduce((s,e)=>s+e.amount,0);
+  const catCard = document.getElementById('cat-card');
+  if (expTotal > 0) {
+    catCard.style.display='';
+    const groups = {};
+    expOnly.forEach(e => { groups[e.category] = (groups[e.category]||0)+e.amount; });
+    const sorted = Object.entries(groups).map(([name,amt])=>({name,amt,pct:amt/expTotal*100,cat:getCat(name,false)})).sort((a,b)=>b.amt-a.amt);
+
+    document.getElementById('segment-bar').innerHTML = sorted.map(g =>
+      `<div class="segment" style="flex:${g.pct};background:${g.cat.color}"></div>`
+    ).join('');
+    document.getElementById('cat-list').innerHTML = sorted.slice(0,5).map(g =>
+      `<div class="cat-row">
+        <div class="cat-name"><span class="dot" style="background:${g.cat.color}"></span>${g.cat.emoji} ${g.cat.name}</div>
+        <div class="cat-amount">${fmtEur(g.amt)} (${Math.round(g.pct)}%)</div>
+      </div>`
+    ).join('');
+  } else { catCard.style.display='none'; }
+
+  // annual chart
+  const year = new Date(selectedDate).getFullYear();
+  document.getElementById('annual-title').textContent = `Aperçu Annuel ${year}`;
+  const annualE = entries.filter(e => new Date(e.dateMillis).getFullYear()===year);
+  const monthlyData = Array.from({length:12},(_,m)=>{
+    const me = annualE.filter(e=>new Date(e.dateMillis).getMonth()===m);
+    return {inc:me.filter(e=>e.isIncome).reduce((s,e)=>s+e.amount,0), exp:me.filter(e=>!e.isIncome).reduce((s,e)=>s+e.amount,0)};
+  });
+  const maxVal = Math.max(...monthlyData.map(d=>Math.max(d.inc,d.exp)),1);
+  const nowM = new Date().getMonth(), nowY = new Date().getFullYear();
+  const mLabels = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  document.getElementById('bars-row').innerHTML = monthlyData.map((d,i)=>{
+    const ih = Math.max(4, Math.round(d.inc/maxVal*74));
+    const eh = Math.max(4, Math.round(d.exp/maxVal*74));
+    const isCurrent = i===nowM && year===nowY;
+    return `<div class="month-col">
+      <div class="bars">
+        <div class="bar" style="height:${ih}px;background:var(--income)"></div>
+        <div class="bar" style="height:${eh}px;background:var(--expense)"></div>
+      </div>
+      <div class="month-label${isCurrent?' current':''}">${mLabels[i]}</div>
+    </div>`;
+  }).join('');
+
+  // feedback
+  const fc = document.getElementById('feedback-card');
+  const ft = document.getElementById('feedback-text');
+  if (net >= 0) {
+    fc.style.background='#ECFDF5'; fc.style.borderColor='#A7F3D0';
+    ft.style.color='#065F46';
+    ft.textContent='✨ Félicitations ! Votre budget est parfaitement équilibré. Continuez ainsi pour maximiser vos économies !';
+  } else {
+    fc.style.background='#FFF1F2'; fc.style.borderColor='#FECDD3';
+    ft.style.color='#9F1239';
+    ft.textContent="💡 Conseil EcoTrack : Vos dépenses dépassent vos revenus sur cette période. Vérifiez vos catégories optionnelles pour ajuster le tir !";
+  }
+
+  // tx list
+  document.getElementById('tx-count').textContent = `${displayed.length} élément(s)`;
+  const cont = document.getElementById('tx-container');
+  if (displayed.length===0) {
+    cont.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Aucune opération enregistrée</div><div class="empty-sub">Ajoutez un revenu ou une dépense en cliquant sur le bouton '+'</div></div>`;
+  } else {
+    // sort newest first
+    const sorted = [...displayed].sort((a,b)=>b.dateMillis-a.dateMillis);
+    cont.innerHTML = `<div class="tx-list">${sorted.map(e=>{
+      const cat = getCat(e.category, e.isIncome);
+      const bg = cat.color+'22';
+      const amtSign = e.isIncome ? '+' : '-';
+      const amtColor = e.isIncome ? 'var(--income)' : 'var(--expense)';
+      return `<div class="tx-card">
+        <div class="tx-icon" style="background:${bg}">${cat.emoji}</div>
+        <div class="tx-info">
+          <div class="tx-name">${e.title||'Sans titre'}</div>
+          <div class="tx-meta"><span class="tx-cat" style="color:${cat.color}">${e.category}</span> • ${fmtShort(e.dateMillis)}</div>
+        </div>
+        <div class="tx-right">
+          <div class="tx-amount" style="color:${amtColor}">${amtSign}${fmtEur(e.amount)}</div>
+          <button class="tx-del" data-id="${e.id}" aria-label="Supprimer">🗑</button>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+    // delete handlers
+    cont.querySelectorAll('.tx-del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        entries = entries.filter(e=>e.id!==btn.dataset.id);
+        saveEntries(); render();
+      });
+    });
+  }
+}
+
+// ─── MODAL ──────────────────────────────────────────────────────────
+function openModal() {
+  isIncome = false; selCat=''; selDateType='today';
+  document.getElementById('inp-amount').value='';
+  document.getElementById('inp-title').value='';
+  updateModalUI();
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('inp-amount').focus();
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+function updateModalUI() {
+  const exp = document.getElementById('btn-expense');
+  const inc = document.getElementById('btn-income');
+  if (isIncome) {
+    inc.style.cssText = `background:var(--income);color:#fff;border-radius:9px`;
+    exp.style.cssText = `background:none;color:var(--text-muted);border-radius:9px`;
+  } else {
+    exp.style.cssText = `background:var(--expense);color:#fff;border-radius:9px`;
+    inc.style.cssText = `background:none;color:var(--text-muted);border-radius:9px`;
+  }
+  const cats = isIncome ? INCOME_CATS : EXPENSE_CATS;
+  if (!selCat) selCat = cats[0].name;
+  const saveBtn = document.getElementById('btn-save');
+  saveBtn.style.background = isIncome ? 'var(--income)' : 'var(--expense)';
+
+  document.getElementById('cat-grid').innerHTML = cats.map(c=>{
+    const sel = selCat===c.name;
+    return `<div class="cat-chip${sel?' selected':''}" data-cat="${c.name}"
+      style="${sel ? `background:${c.color}22;border-color:${c.color};color:${c.color}` : ''}">
+      ${c.emoji} ${c.name}
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.cat-chip').forEach(chip=>{
+    chip.addEventListener('click',()=>{ selCat=chip.dataset.cat; updateModalUI(); });
+  });
+
+  document.querySelectorAll('.date-btn').forEach(b=>{
+    const active = b.dataset.date===selDateType;
+    b.classList.toggle('active', active);
+    b.style.background = active ? (isIncome?'var(--income)':'var(--expense)') : '';
+    b.style.color = active ? '#fff' : '';
+  });
+
+  validateForm();
+}
+
+function validateForm() {
+  const amt = parseFloat(document.getElementById('inp-amount').value.replace(',','.'));
+  document.getElementById('btn-save').disabled = !(amt>0);
+}
+
+function getSelectedTimestamp() {
+  const now = Date.now();
+  if (selDateType==='today') return now;
+  if (selDateType==='yesterday') return now - 86400000;
+  return selectedDate;
+}
+
+// ─── EVENTS ─────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{ selectedTab=+t.dataset.tab; render(); });
+});
+document.getElementById('prev-btn').addEventListener('click',()=>{ adjustPeriod(-1); render(); });
+document.getElementById('next-btn').addEventListener('click',()=>{ adjustPeriod(1); render(); });
+document.getElementById('fab').addEventListener('click', openModal);
+document.getElementById('btn-cancel').addEventListener('click', closeModal);
+document.getElementById('modal-overlay').addEventListener('click', e=>{ if(e.target===e.currentTarget) closeModal(); });
+document.getElementById('btn-expense').addEventListener('click',()=>{ isIncome=false; updateModalUI(); });
+document.getElementById('btn-income').addEventListener('click',()=>{ isIncome=true; updateModalUI(); });
+document.getElementById('inp-amount').addEventListener('input', validateForm);
+document.querySelectorAll('.date-btn').forEach(b=>{
+  b.addEventListener('click',()=>{ selDateType=b.dataset.date; updateModalUI(); });
+});
+
+document.getElementById('btn-save').addEventListener('click',()=>{
+  const amt = parseFloat(document.getElementById('inp-amount').value.replace(',','.'));
+  if (!(amt>0)) return;
+  const title = document.getElementById('inp-title').value.trim() || 'Sans titre';
+  const cats = isIncome ? INCOME_CATS : EXPENSE_CATS;
+  const cat = selCat || cats[0].name;
+  entries = [...entries, {id:uuid(), title, amount:amt, isIncome, category:cat, dateMillis:getSelectedTimestamp()}];
+  saveEntries(); closeModal(); render();
+});
+
+document.getElementById('search').addEventListener('input', e=>{
+  searchQuery = e.target.value;
+  document.getElementById('search-clear').style.display = searchQuery ? '' : 'none';
+  render();
+});
+document.getElementById('search-clear').addEventListener('click',()=>{
+  searchQuery='';
+  document.getElementById('search').value='';
+  document.getElementById('search-clear').style.display='none';
+  render();
+});
+
+// ─── PWA INSTALL ────────────────────────────────────────────────────
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault(); deferredPrompt=e;
+  document.getElementById('install-banner').classList.add('show');
+});
+document.getElementById('btn-install-ok').addEventListener('click',async()=>{
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const {outcome} = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('install-banner').classList.remove('show');
+});
+document.getElementById('btn-install-no').addEventListener('click',()=>{
+  document.getElementById('install-banner').classList.remove('show');
+});
+window.addEventListener('appinstalled',()=>{
+  document.getElementById('install-banner').classList.remove('show');
+});
+
+// ─── INIT ────────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+loadEntries();
+render();
+</script>
+</body>
+</html>
